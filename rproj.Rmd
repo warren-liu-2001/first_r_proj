@@ -1,0 +1,79 @@
+---
+title: "My First Exercise"
+author: "Warren Liu"
+date: "May 7th 2020"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 2
+---
+# NSFW Posts? Ooh, getting saucy here aren't we?
+Firstly, let's explore the relation between Whether a Post is marked Over 18 and the amount of points it receives
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+data_df <- read.csv("r_dataisbeautiful_posts.csv")
+
+boxplot(score ~ over_18 , data= data_df, main="Distribution of scores, by whether a post is NSFW",
+   xlab="NSFW or Not?", ylab="Score")
+```
+As we see, the IQR is quite similar, and there are a lot of outliers. However, it seems that non NSFW posts generally garnish more points.
+
+Well, data isn't always beautiful;
+
+# Scores vs Awards Received
+Why don't we see how generous our community is?
+
+```{r}
+library(ggplot2)
+ggplot(data_df, aes(x=score, y=total_awards_received)) + geom_point(size=0.5)
+
+```
+
+Well crap. It seems like people generally don't give many awards on reddit.
+
+What is another thing we could potentially explore?
+
+```{r}
+library(ggplot2)
+ggplot(data_df, aes(x=num_comments, y=score)) + geom_point(size=0.5) + geom_smooth(method=lm, se=FALSE)
+
+```
+
+Bah, still Inconclusive (at least the relationship isn't independent). Why don't we try another type of graph?
+```{r}
+p <- ggplot(data_df, aes(x=num_comments)) +
+  geom_density()
+print(p)
+```
+Well damn, that was way too big. It almost looks like the axis. Thus, lets perform some calculations and eliminate all the outliers.
+
+```{r}
+data_num_comm = data_df$num_comments
+
+summary(data_num_comm)
+
+```
+
+Okay, this means that the limit for outliers is Q3 + 1.5IQR should be 8.5 or 8 comments. This suggests that most posts tend to generally Die in NEW, and Reddit's algorithm tends to promote only a select few posts to be trending. For the sake of data, i'll expand it to 150 comments. This shows a distinct left skew.
+
+```{r}
+ggplot(data_df, aes(x=num_comments)) +
+  geom_density(color="darkblue", fill="lightblue") + coord_cartesian(xlim = c(0,   150))
+
+```
+
+Now Let us Filter out some undesirable Variables. We'll filter out the no awards, and ensure that the score is at least 100.
+```{r}
+library(ggplot2)
+
+filt_df <- data_df %>% filter(
+  100 < score,  total_awards_received > 0
+  )
+
+ggplot(filt_df, aes(x=score, y=num_comments)) + geom_point(size=0.5) + geom_smooth(method=lm)
+
+
+```
+Welp, Guess I'll stick to matplotlib and python.
